@@ -1,0 +1,22 @@
+CREATE TABLE IF NOT EXISTS Weekly_Rev_Check_Elm_9_21_25 (
+    Date_dt DATE,
+    Supply_Partner VARCHAR(1),
+    Supply_Group_Labels VARCHAR(14),
+    Supply_RPM NUMBER(20, 17),
+    Supply_RPS NUMBER(20, 18),
+    Supply_Revenue NUMBER(25, 18),
+    Supply_Bid_Requests NUMBER(11, 0),
+    Ad_Responses NUMBER(11, 0),
+    Sold_Impressions NUMBER(9, 0),
+    Fill_Rate NUMBER(23, 21),
+    Bid_Fill_Rate NUMBER(21, 19),
+    Unnamed__11 VARCHAR(1),
+    Unnamed__12 NUMBER(5, 3),
+    Supply_RPM_1 NUMBER(19, 17),
+    Supply_RPS_1 NUMBER(20, 18),
+    Supply_Revenue_1 NUMBER(19, 12),
+    Supply_Bid_Requests_1 NUMBER(10, 0),
+    Sold_Impressions_1 NUMBER(8, 0),
+    Fill_Rate_1 NUMBER(21, 19),
+    Bid_Fill_Rate_1 NUMBER(19, 17)
+);

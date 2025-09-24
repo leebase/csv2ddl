@@ -1,0 +1,6 @@
+id,name,created_date,revenue,active
+1,John Doe,2023-01-15,1234.56,true
+2,Jane Smith,2023-02-20,5678.90,false
+3,Bob Johnson,2023-03-10,999.99,true
+4,Alice Brown,2023-04-05,4321.00,false
+5,Charlie Wilson,2023-05-12,8765.43,true
