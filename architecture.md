@@ -209,3 +209,20 @@ Each dialect defines:
 - Input validation for file paths
 - Safe handling of potentially malicious CSV content
 - No execution of generated DDL in external mode
+
+## Architecture Decisions Log
+
+### 2025-09-24 – Sampling and Column Guardrails
+- **Context:** Type inference previously processed full datasets and uncontrolled column counts, risking memory exhaustion and unwieldy DDL.
+- **Decision:** Cap sampling to 50,000 rows (`FileReader._sanitize_sample_size`) and enforce a configurable maximum column threshold (default 512) with explicit logging.
+- **Outcome:** Predictable resource usage during inference; CLI exposes `--max-columns` and documents the internal sampling cap.
+
+### 2025-09-24 – Identifier Sanitization Strategy
+- **Context:** Reserved-word handling was global and hard-coded (`date` → `_dt`, everything else → `_col`).
+- **Decision:** Introduce per-dialect identifier policies so each backend can supply reserved-word sets and suffix strategies while preserving uniqueness guarantees.
+- **Outcome:** Easier to extend dialect support; future dialects can customize suffixing without modifying core logic.
+
+### 2025-09-24 – Logging and Verbosity Controls
+- **Context:** CLI and inference modules relied on `print` statements, making automation noisy and troubleshooting difficult.
+- **Decision:** Standardize on Python’s logging module, add a `--verbose` flag, and emit debug-level traces for file loading and inference decisions.
+- **Outcome:** Cleaner CLI output by default with opt-in visibility when diagnosing data issues or AI-generated changes.
