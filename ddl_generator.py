@@ -1,4 +1,5 @@
-from typing import Dict
+from dataclasses import dataclass
+from typing import Dict, Set
 import re
 
 
@@ -12,27 +13,48 @@ COMMON_RESERVED_WORDS = {
     'where'
 }
 
-DIALECT_RESERVED_WORDS = {
-    'snowflake': COMMON_RESERVED_WORDS | {'date', 'timestamp', 'variant'},
-    'sqlite': COMMON_RESERVED_WORDS | {
-        'abort', 'after', 'analyze', 'attach', 'before', 'begin', 'commit',
-        'conflict', 'detach', 'each', 'exclusive', 'explain', 'fail', 'for',
-        'if', 'ignore', 'immediate', 'indexed', 'instead', 'isnull', 'limit',
-        'offset', 'plan', 'pragma', 'raise', 'regexp', 'reindex', 'release',
-        'replace', 'restrict', 'rollback', 'rowid', 'vacuum'
-    }
+@dataclass(frozen=True)
+class IdentifierPolicy:
+    """Configuration for adjusting identifiers per dialect."""
+
+    reserved_words: Set[str]
+    suffix_overrides: Dict[str, str]
+    default_suffix: str
+
+
+IDENTIFIER_POLICIES = {
+    'snowflake': IdentifierPolicy(
+        reserved_words=COMMON_RESERVED_WORDS | {'date', 'timestamp', 'variant'},
+        suffix_overrides={'date': '_dt'},
+        default_suffix='_col'
+    ),
+    'sqlite': IdentifierPolicy(
+        reserved_words=COMMON_RESERVED_WORDS | {
+            'abort', 'after', 'analyze', 'attach', 'before', 'begin', 'commit',
+            'conflict', 'detach', 'each', 'exclusive', 'explain', 'fail', 'for',
+            'if', 'ignore', 'immediate', 'indexed', 'instead', 'isnull', 'limit',
+            'offset', 'plan', 'pragma', 'raise', 'regexp', 'reindex', 'release',
+            'replace', 'restrict', 'rollback', 'rowid', 'vacuum'
+        },
+        suffix_overrides={},
+        default_suffix='_col'
+    )
 }
+
+DEFAULT_IDENTIFIER_POLICY = IdentifierPolicy(
+    reserved_words=COMMON_RESERVED_WORDS,
+    suffix_overrides={},
+    default_suffix='_col'
+)
 
 
 class DDLGenerator:
     """Generates CREATE TABLE DDL statements for different SQL dialects."""
 
-    def __init__(self, dialect: str = 'snowflake'):
+    def __init__(self, dialect: str = 'snowflake', identifier_policy: IdentifierPolicy | None = None):
         self.dialect = dialect.lower()
-        self.reserved_words = DIALECT_RESERVED_WORDS.get(
-            self.dialect,
-            COMMON_RESERVED_WORDS
-        )
+        policy = identifier_policy or IDENTIFIER_POLICIES.get(self.dialect, DEFAULT_IDENTIFIER_POLICY)
+        self.identifier_policy = policy
 
     def generate_ddl(self,
                     table_name: str,
@@ -93,10 +115,10 @@ class DDLGenerator:
     def _avoid_reserved_word(self, identifier: str) -> str:
         """Adjust identifier if it matches a reserved SQL keyword."""
         lower = identifier.lower()
-        if lower in self.reserved_words:
-            if lower == 'date':
-                return f"{identifier}_dt"
-            return f"{identifier}_col"
+        policy = self.identifier_policy
+        if lower in policy.reserved_words:
+            suffix = policy.suffix_overrides.get(lower, policy.default_suffix)
+            return self._append_suffix(identifier, suffix)
         return identifier
 
     def _make_unique_identifier(self, base_name: str, existing: set, existing_normalized: set) -> str:
@@ -119,3 +141,14 @@ class DDLGenerator:
     def _normalize_identifier(identifier: str) -> str:
         """Return a case-insensitive canonical form for uniqueness checks."""
         return identifier.lower()
+
+    @staticmethod
+    def _append_suffix(identifier: str, suffix: str) -> str:
+        """Append a suffix ensuring no duplicate underscores."""
+        if not suffix:
+            return identifier
+        if identifier.endswith(suffix):
+            return identifier
+        if suffix.startswith('_') or identifier.endswith('_'):
+            return f"{identifier}{suffix}"
+        return f"{identifier}_{suffix}"

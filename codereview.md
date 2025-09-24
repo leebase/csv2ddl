@@ -31,30 +31,35 @@ This assessment highlights risks and improvement opportunities discovered while 
 
 ## Development Best Practices
 
-1. **Lack of Linting in CI**  
+1. **Lack of Linting in CI** — ✅ Addressed  
    - *Files*: `.github/workflows/ci.yml`  
    - *Issue*: CI runs tests but not `ruff`. Manual enforcement is easy to forget.  
-   - *Action*: Add a `ruff check .` step before `pytest`.
+   - *Action*: Add a `ruff check .` step before `pytest`.  
+   - *Resolution*: Workflow now installs dev extras and runs `ruff check .` prior to `pytest`.
 
-2. **CLI Command Uses `print` for Errors**  
+2. **CLI Command Uses `print` for Errors** — ✅ Addressed  
    - *Files*: `csv2ddl.py`  
    - *Issue*: Mixing stdout/stderr makes scripting harder; return codes and logging should be clearer.  
-   - *Action*: Adopt `logging` with level-aware messages and ensure non-zero `sys.exit` paths always go through `stderr`.
+   - *Action*: Adopt `logging` with level-aware messages and ensure non-zero `sys.exit` paths always go through `stderr`.  
+   - *Resolution*: CLI uses Python’s logging module, supports `--verbose`, and routes failures through structured logging.
 
-3. **Static Reserved Word Suffixing**  
+3. **Static Reserved Word Suffixing** — ✅ Addressed  
    - *Files*: `ddl_generator.py`  
    - *Issue*: Suffix decisions (`_dt`, `_col`) are hard-coded and might surprise maintainers adding new dialects.  
-   - *Action*: Provide a configuration layer or strategy interface so dialects can choose alternative suffixes or quoting rules.
+   - *Action*: Provide a configuration layer or strategy interface so dialects can choose alternative suffixes or quoting rules.  
+   - *Resolution*: Identifier policies are now configurable per dialect with overrideable suffix strategies.
 
-4. **Docs Reference Placeholder URLs**  
+4. **Docs Reference Placeholder URLs** — ✅ Addressed  
    - *Files*: `README.md`, `GITHUB.md`  
    - *Issue*: `OWNER/REPO` placeholders may linger post-publish, leading to broken badges or instructions.  
-   - *Action*: Track a post-publish task to replace placeholders and run `README` link checks periodically.
+   - *Action*: Track a post-publish task to replace placeholders and run `README` link checks periodically.  
+   - *Resolution*: Documentation references the canonical `leebase/csv2ddl` paths and notes how to adapt when forking.
 
-5. **Sampling and Type Detection Lack Logging Hooks**  
+5. **Sampling and Type Detection Lack Logging Hooks** — ✅ Addressed  
    - *Files*: `type_inference.py`, `csv2ddl.py`  
    - *Issue*: Debugging inference mismatches requires adding print statements manually.  
-   - *Action*: Use `logging` and expose a verbosity flag (`--verbose`) to aid troubleshooting without code changes.
+   - *Action*: Use `logging` and expose a verbosity flag (`--verbose`) to aid troubleshooting without code changes.  
+   - *Resolution*: Both files emit structured debug logs gated by the `--verbose` flag, covering sampling, inference, and mapping steps.
 
 ## Suggested Follow-Up Process
 

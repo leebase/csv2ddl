@@ -1,3 +1,4 @@
+import logging
 import os
 import pandas as pd
 from typing import Optional
@@ -6,6 +7,8 @@ import chardet
 
 MAX_SAMPLE_ROWS = 50000
 DEFAULT_MAX_COLUMNS = 512
+
+logger = logging.getLogger(__name__)
 
 
 class FileReader:
@@ -45,6 +48,13 @@ class FileReader:
         file_type = FileReader.detect_file_type(file_path)
 
         bounded_sample = FileReader._sanitize_sample_size(sample_size)
+
+        logger.debug(
+            "Preparing to read %s as %s (sample_size=%s)",
+            file_path,
+            file_type,
+            bounded_sample
+        )
 
         if file_type == 'csv':
             df = FileReader._read_csv(file_path, delimiter, encoding, bounded_sample)
@@ -103,6 +113,12 @@ class FileReader:
         if sample_size <= 0:
             raise ValueError("sample_size must be positive when provided")
 
+        if sample_size > MAX_SAMPLE_ROWS:
+            logger.debug(
+                "Sample size %s exceeds cap of %s; clamping",
+                sample_size,
+                MAX_SAMPLE_ROWS
+            )
         return min(sample_size, MAX_SAMPLE_ROWS)
 
     @staticmethod
@@ -114,3 +130,4 @@ class FileReader:
             raise ValueError(
                 f"File contains {column_count} columns which exceeds the allowed maximum of {limit}."
             )
+        logger.debug("Column count %s within limit %s", column_count, limit)

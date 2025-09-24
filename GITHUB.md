@@ -11,9 +11,9 @@ This guide walks through creating a GitHub repository, pushing the existing proj
 ## 2. Add a Git Remote Locally
 Run these commands from your project root on the machine that has the canonical `.git` history:
 ```bash
-git remote add origin https://github.com/<OWNER>/<REPO>.git
+git remote add origin https://github.com/leebase/csv2ddl.git
 ```
-Replace `<OWNER>` and `<REPO>` with the values from GitHub. Verify:
+If you fork the project, swap the URL for your fork. Verify:
 ```bash
 git remote -v
 ```
@@ -32,11 +32,11 @@ After the push, navigate to the repository on GitHub. A yellow dot or green chec
 2. Select the `CI` workflow run. You’ll see steps like “Checkout,” “Set up Python,” “Install dependencies,” and “Run tests.”
 
 ## 5. Update the README Badge
-Once the workflow succeeds, replace the placeholder badge in `README.md` with the real path:
+Once the workflow succeeds, the badge in `README.md` should point at your repository. For this project it is already set to:
 ```markdown
-![CI](https://github.com/<OWNER>/<REPO>/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/leebase/csv2ddl/actions/workflows/ci.yml/badge.svg)
 ```
-Push that change and the badge will reflect the build status on the repo homepage.
+Adjust the path if you are working from a fork.
 
 ## 6. Future Development Workflow
 - Make changes locally, commit, and push to `main` (or feature branches).

@@ -1,7 +1,6 @@
 # CSV to SQL DDL Converter
 
-![CI](https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg)
-<sub>Replace `OWNER/REPO` with your repository path after publishing.</sub>
+![CI](https://github.com/leebase/csv2ddl/actions/workflows/ci.yml/badge.svg)
 
 A Python tool that analyzes CSV files and generates optimized DDL statements for creating tables in various SQL databases. Currently supports Snowflake and SQLite dialects, with an extensible architecture for adding more databases.
 
@@ -79,7 +78,7 @@ csv2ddl \
 Install developer tooling and run the suite:
 
 ```bash
-pip install .[dev]
+pip install ".[dev]"
 pytest
 ```
 

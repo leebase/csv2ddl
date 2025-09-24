@@ -1,6 +1,10 @@
+import logging
 import pandas as pd
 from dateutil.parser import parse as date_parse
 from typing import Dict, Any
+
+
+logger = logging.getLogger(__name__)
 
 
 class TypeInferrer:
@@ -22,8 +26,12 @@ class TypeInferrer:
             Dict with column names as keys and type info as values
         """
         results = {}
+        logger.debug("Inferring types for %s columns", len(df.columns))
         for col in df.columns:
-            results[col] = self._infer_column_type(df[col])
+            logger.debug("Analyzing column '%s'", col)
+            inferred = self._infer_column_type(df[col])
+            logger.debug("Column '%s' inferred as %s", col, inferred['snowflake_type'])
+            results[col] = inferred
         return results
 
     def _infer_column_type(self, series: pd.Series) -> Dict[str, Any]:
@@ -33,6 +41,7 @@ class TypeInferrer:
 
         if len(non_null) == 0:
             # All nulls - default to string
+            logger.debug("Column empty after dropping nulls; defaulting to VARCHAR(1)")
             return {
                 'inferred_type': 'string',
                 'snowflake_type': 'VARCHAR(1)',
@@ -42,6 +51,7 @@ class TypeInferrer:
 
         # Check for boolean-like values
         if self._is_boolean_column(non_null):
+            logger.debug("Column detected as boolean-like; treating as VARCHAR(5)")
             return {
                 'inferred_type': 'string',  # Treat as string for compatibility
                 'snowflake_type': 'VARCHAR(5)',
@@ -56,6 +66,7 @@ class TypeInferrer:
 
         # Then try date detection
         if self._is_date_column(non_null):
+            logger.debug("Column detected as date")
             return {
                 'inferred_type': 'date',
                 'snowflake_type': 'DATE',
@@ -117,6 +128,7 @@ class TypeInferrer:
 
             if len(numeric_series) / len(series) < 0.8:
                 # Less than 80% numeric - not a numeric column
+                logger.debug("Column rejected for numeric inference (<80%% numeric)")
                 return None
 
             # Check if integers or floats
@@ -132,6 +144,12 @@ class TypeInferrer:
                 if min_val < 0:
                     precision += 1  # For negative sign
 
+                logger.debug(
+                    "Detected integer column with bounds (%s, %s) and precision %s",
+                    min_val,
+                    max_val,
+                    precision
+                )
                 return {
                     'inferred_type': 'integer',
                     'snowflake_type': f'NUMBER({precision}, 0)',
@@ -160,6 +178,11 @@ class TypeInferrer:
                 precision = min(precision + 2, 38)  # Snowflake max precision
                 scale = min(scale + 1, 37)
 
+                logger.debug(
+                    "Detected float column with precision %s and scale %s",
+                    precision,
+                    scale
+                )
                 return {
                     'inferred_type': 'float',
                     'snowflake_type': f'NUMBER({precision}, {scale})',
@@ -177,6 +200,11 @@ class TypeInferrer:
 
         # Add padding for future growth (20% or at least 10 chars)
         padded_length = int(max_length * 1.2) + 10
+        logger.debug(
+            "Detected string column with max length %s -> padded length %s",
+            max_length,
+            padded_length
+        )
 
         return {
             'inferred_type': 'string',
