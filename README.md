@@ -2,14 +2,14 @@
 
 ![CI](https://github.com/leebase/csv2ddl/actions/workflows/ci.yml/badge.svg)
 
-A Python tool that analyzes CSV files and generates optimized DDL statements for creating tables in various SQL databases. Currently supports Snowflake and SQLite dialects, with an extensible architecture for adding more databases.
+A Python tool that analyzes CSV files and generates optimized DDL statements for creating tables in various SQL databases. Currently supports Snowflake, SQLite, Postgres, and MySQL dialects, with an extensible architecture for adding more databases.
 
 ## Features
 
 - **Multiple File Formats**: Supports CSV and Excel files (.csv, .xlsx)
 - **Automatic Type Inference**: Intelligently detects dates, numbers, and strings from data
 - **Optimal Sizing**: Calculates appropriate column sizes based on actual data content
-- **Multiple SQL Dialects**: Generate DDL for Snowflake, SQLite, and easily add more
+- **Multiple SQL Dialects**: Generate DDL for Snowflake, SQLite, Postgres, and MySQL, and easily add more
 - **Safe Identifiers**: Sanitizes table and column names, handling spaces, special characters, and reserved keywords (e.g., `date` → `Date_dt`) automatically while guaranteeing uniqueness.
 - **Configurable Sampling**: Analyze large files efficiently without loading everything into memory
 - **Command-Line Interface**: Simple to use from the terminal
@@ -47,6 +47,8 @@ csv2ddl path/to/your/file.xlsx
 ```bash
 csv2ddl --dialect snowflake path/to/file.csv
 csv2ddl --dialect sqlite path/to/file.csv
+csv2ddl --dialect postgres path/to/file.csv
+csv2ddl --dialect mysql path/to/file.csv
 ```
 
 ### Advanced Options
@@ -61,7 +63,7 @@ csv2ddl \
 ```
 
 ### Options
-- `--dialect`: SQL dialect (snowflake, sqlite) - default: snowflake
+- `--dialect`: SQL dialect (snowflake, sqlite, postgres, mysql) - default: snowflake
 - `--sample-size`: Number of rows to sample for type inference - default: 1000
 - `--output`: Output file path (optional, prints to stdout if not specified)
 - `--table-name`: Custom table name (optional, uses filename if not specified)
@@ -91,8 +93,12 @@ The tests cover file loading, type inference for common and mixed data, dialect 
 ```bash
 csv2ddl sample_data.csv --dialect snowflake --output sample_snowflake.sql
 csv2ddl sample_data.csv --dialect sqlite --output sample_sqlite.sql
+csv2ddl sample_data.csv --dialect postgres --output sample_postgres.sql
+csv2ddl sample_data.csv --dialect mysql --output sample_mysql.sql
 cat sample_snowflake.sql
 cat sample_sqlite.sql
+cat sample_postgres.sql
+cat sample_mysql.sql
 ```
 
 ### Input CSV (sample_data.csv)
