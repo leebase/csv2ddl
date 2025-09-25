@@ -117,6 +117,98 @@ class MySQLDialect(Dialect):
         return 'TEXT'
 
 
+class OracleDialect(Dialect):
+    """Oracle SQL dialect mapper."""
+
+    MAX_NUMERIC_PRECISION = 38
+    MAX_VARCHAR_LENGTH = 4000
+
+    def map_type(self, inferred_type: str, params: Dict[str, Any]) -> str:
+        if inferred_type == 'date':
+            return 'DATE'
+        if inferred_type == 'integer':
+            precision = max(1, params.get('precision', 10))
+            if precision > self.MAX_NUMERIC_PRECISION:
+                return 'NUMBER'
+            return f'NUMBER({precision}, 0)'
+        if inferred_type == 'float':
+            requested_precision = max(1, params.get('precision', 18))
+            scale = max(0, params.get('scale', 6))
+            precision = max(scale + 1, min(requested_precision, self.MAX_NUMERIC_PRECISION))
+            scale = min(scale, precision - 1)
+            if requested_precision > self.MAX_NUMERIC_PRECISION:
+                return 'NUMBER'
+            return f'NUMBER({precision}, {scale})'
+        if inferred_type == 'string':
+            max_length = max(1, params.get('max_length', 255))
+            if max_length > self.MAX_VARCHAR_LENGTH:
+                return 'CLOB'
+            return f'VARCHAR2({max_length})'
+        return 'VARCHAR2(255)'
+
+
+class SQLServerDialect(Dialect):
+    """SQL Server dialect mapper."""
+
+    def map_type(self, inferred_type: str, params: Dict[str, Any]) -> str:
+        if inferred_type == 'date':
+            return 'DATE'
+        if inferred_type == 'integer':
+            precision = max(1, params.get('precision', 10))
+            if precision <= 3:
+                return 'TINYINT'
+            if precision <= 5:
+                return 'SMALLINT'
+            if precision <= 10:
+                return 'INT'
+            if precision <= 19:
+                return 'BIGINT'
+            return f'DECIMAL({min(precision, 38)}, 0)'
+        if inferred_type == 'float':
+            precision = max(1, params.get('precision', 18))
+            scale = max(0, params.get('scale', 6))
+            precision = max(scale + 1, min(precision, 38))
+            scale = min(scale, precision - 1)
+            return f'DECIMAL({precision}, {scale})'
+        if inferred_type == 'string':
+            max_length = max(1, params.get('max_length', 255))
+            if max_length > 4000:
+                return 'NVARCHAR(MAX)'
+            return f'NVARCHAR({max_length})'
+        return 'NVARCHAR(MAX)'
+
+
+class DatabricksDialect(Dialect):
+    """Databricks (Spark SQL) dialect mapper."""
+
+    def map_type(self, inferred_type: str, params: Dict[str, Any]) -> str:
+        if inferred_type == 'date':
+            return 'DATE'
+        if inferred_type == 'integer':
+            precision = max(1, params.get('precision', 10))
+            if precision <= 3:
+                return 'TINYINT'
+            if precision <= 5:
+                return 'SMALLINT'
+            if precision <= 9:
+                return 'INT'
+            if precision <= 18:
+                return 'BIGINT'
+            return f'DECIMAL({min(precision, 38)}, 0)'
+        if inferred_type == 'float':
+            precision = max(1, params.get('precision', 18))
+            scale = max(0, params.get('scale', 6))
+            precision = max(scale + 1, min(precision, 38))
+            scale = min(scale, precision - 1)
+            return f'DECIMAL({precision}, {scale})'
+        if inferred_type == 'string':
+            max_length = max(1, params.get('max_length', 255))
+            if max_length > 65535:
+                return 'STRING'
+            return f'VARCHAR({max_length})'
+        return 'STRING'
+
+
 class DialectMapper:
     """Maps inferred types to SQL dialect types."""
 
@@ -125,6 +217,9 @@ class DialectMapper:
         'sqlite': SQLiteDialect,
         'postgres': PostgresDialect,
         'mysql': MySQLDialect,
+        'oracle': OracleDialect,
+        'sqlserver': SQLServerDialect,
+        'databricks': DatabricksDialect,
     }
 
     def __init__(self, dialect_name: str = 'snowflake'):
