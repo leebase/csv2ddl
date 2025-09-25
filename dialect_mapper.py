@@ -49,12 +49,82 @@ class SQLiteDialect(Dialect):
             return 'TEXT'
 
 
+class PostgresDialect(Dialect):
+    """PostgreSQL SQL dialect mapper."""
+
+    SMALLINT_PRECISION = 4
+    INTEGER_PRECISION = 9
+    BIGINT_PRECISION = 18
+
+    def map_type(self, inferred_type: str, params: Dict[str, Any]) -> str:
+        if inferred_type == 'date':
+            return 'DATE'
+        if inferred_type == 'integer':
+            precision = params.get('precision', 10)
+            if precision <= self.SMALLINT_PRECISION:
+                return 'SMALLINT'
+            if precision <= self.INTEGER_PRECISION:
+                return 'INTEGER'
+            if precision <= self.BIGINT_PRECISION:
+                return 'BIGINT'
+            return f'NUMERIC({precision}, 0)'
+        if inferred_type == 'float':
+            precision = params.get('precision', 18)
+            scale = params.get('scale', 6)
+            precision = max(scale + 1, min(precision, 1000))
+            scale = min(scale, precision - 1)
+            return f'NUMERIC({precision}, {scale})'
+        if inferred_type == 'string':
+            max_length = params.get('max_length', 255)
+            if max_length > 10485760:  # 10 MB upper bound for practical varchar sizing
+                return 'TEXT'
+            return f'VARCHAR({max_length})'
+        return 'TEXT'
+
+
+class MySQLDialect(Dialect):
+    """MySQL SQL dialect mapper."""
+
+    def map_type(self, inferred_type: str, params: Dict[str, Any]) -> str:
+        if inferred_type == 'date':
+            return 'DATE'
+        if inferred_type == 'integer':
+            precision = params.get('precision', 10)
+            if precision <= 3:
+                return 'TINYINT'
+            if precision <= 5:
+                return 'SMALLINT'
+            if precision <= 7:
+                return 'MEDIUMINT'
+            if precision <= 10:
+                return 'INT'
+            if precision <= 19:
+                return 'BIGINT'
+            return f'DECIMAL({precision}, 0)'
+        if inferred_type == 'float':
+            precision = params.get('precision', 18)
+            scale = params.get('scale', 6)
+            precision = max(scale + 1, min(precision, 65))
+            scale = min(scale, 30)
+            if scale >= precision:
+                precision = scale + 1
+            return f'DECIMAL({precision}, {scale})'
+        if inferred_type == 'string':
+            max_length = params.get('max_length', 255)
+            if max_length > 65535:
+                return 'TEXT'
+            return f'VARCHAR({max_length})'
+        return 'TEXT'
+
+
 class DialectMapper:
     """Maps inferred types to SQL dialect types."""
 
     DIALECTS = {
         'snowflake': SnowflakeDialect,
-        'sqlite': SQLiteDialect
+        'sqlite': SQLiteDialect,
+        'postgres': PostgresDialect,
+        'mysql': MySQLDialect,
     }
 
     def __init__(self, dialect_name: str = 'snowflake'):

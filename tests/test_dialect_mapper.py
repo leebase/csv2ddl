@@ -31,6 +31,34 @@ def test_map_sqlite_types():
     assert mapped["description"] == "TEXT"
 
 
+def test_map_postgres_integer():
+    type_info = {
+        "order_id": {
+            "inferred_type": "integer",
+            "parameters": {"precision": 12, "scale": 0}
+        }
+    }
+
+    mapper = DialectMapper("postgres")
+    mapped = mapper.map_column_types(type_info)
+
+    assert mapped["order_id"] == "BIGINT"
+
+
+def test_map_mysql_string_to_text():
+    type_info = {
+        "notes": {
+            "inferred_type": "string",
+            "parameters": {"max_length": 70000}
+        }
+    }
+
+    mapper = DialectMapper("mysql")
+    mapped = mapper.map_column_types(type_info)
+
+    assert mapped["notes"] == "TEXT"
+
+
 def test_unsupported_dialect_raises():
     with pytest.raises(ValueError):
-        DialectMapper("postgres")
+        DialectMapper("oracle")
